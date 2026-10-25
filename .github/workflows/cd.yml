@@ -1,9 +1,5 @@
 name: HealthConnect CI-CD (Agile-Linked Deployment)
 
-# This workflow is the Q3 integration piece: it only deploys after the CI
-# workflow succeeds, and the deploy step logs the Jira issue ID referenced
-# in the commit message, linking the DevOps pipeline back to the Agile
-# work item that triggered it (e.g. "HC-4 Book Appointment: fix slot bug").
 
 on:
   workflow_run:
