@@ -1,0 +1,50 @@
+name: HealthConnect CI-CD (Agile-Linked Deployment)
+
+# This workflow is the Q3 integration piece: it only deploys after the CI
+# workflow succeeds, and the deploy step logs the Jira issue ID referenced
+# in the commit message, linking the DevOps pipeline back to the Agile
+# work item that triggered it (e.g. "HC-4 Book Appointment: fix slot bug").
+
+on:
+  workflow_run:
+    workflows: ["HealthConnect CI"]
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Trace linked Jira user story
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          echo "Latest commit message: $COMMIT_MSG"
+          JIRA_ID=$(echo "$COMMIT_MSG" | grep -oE 'HC-[0-9]+' || echo "none")
+          echo "Linked Jira issue: $JIRA_ID"
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
